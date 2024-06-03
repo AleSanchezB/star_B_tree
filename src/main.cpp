@@ -2,7 +2,7 @@
 #include "headers/Tree_B.hpp"
 #include <time.h>
 int main() {
-    Tree_B<int, 4> tree;
+    Tree_B<int, 6> tree;
     // std::cout << "----------------" << std::endl;
     // std::cout << "Inserting 1" << std::endl;
     // tree.insert(1);
@@ -120,5 +120,6 @@ int main() {
         tree.print();
         
     }
+    std::cout << "Terminado" << std::endl; 
     return 0; 
 }
