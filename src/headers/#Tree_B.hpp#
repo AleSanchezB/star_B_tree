@@ -58,7 +58,7 @@ private:
     void rotateRight(Node* parent, int index);
     void rotateLeft(Node* parent, int index);
     bool verifyRotate(Node* root, int index);
-    void splitNotLeaf(Node* parent, int index);
+    void  splitNotLeaf(Node* parent, int index);
 
     void printTree(Node* node, int depth, std::ostringstream& oss);
 public:

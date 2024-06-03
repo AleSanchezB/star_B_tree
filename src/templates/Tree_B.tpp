@@ -1,5 +1,6 @@
 #include "../headers/Queue.hpp"
-
+#include <sstream>
+#
 /**************************************************************************/
 template <typename T, int m>
 Tree_B<T, m>::Tree_B(){
@@ -22,29 +23,10 @@ Tree_B<T, m>& Tree_B<T, m>::operator=(const Tree_B<T, m>& g){ return *this; }
 template <typename T, int m>
 void Tree_B<T, m>::free(Node* p){
     if (p == nullptr) return;
-
     for(int i = 0; i < p->children_size; ++i){
         free(p->children[i]);
     }
-    std::cout << "Deleting children" << std::endl;
-    p->print();
     p->free();
-    // Queue<Node*> q;
-    // q.enqueue(root);
-    // Node* aux;
-    // while(!q.isEmpty()){
-    //     aux = q.getFront();
-    //     q.dequeue();
-    //     free(aux);
-    //     for(int i = 0; i < aux->children_size; ++i){
-    //         if(aux->children[i] != nullptr)
-    //             q.enqueue(aux->children[i]);
-    //     }
-    // }
-    // for(int i = 0; i < p->children_size; ++i){
-    //     free(p->children[i]);
-    // }
-    // p->free();
     delete p;
 }
 /**************************************************************************/
@@ -58,7 +40,6 @@ void Tree_B<T, m>::insert(const T& d, Node*& p){
         i++;
     }
     if(!p->leaf) {
-        //p->children[i-1]->print();
         insert(d, p->children[i]);
         return;
     }
@@ -68,7 +49,6 @@ void Tree_B<T, m>::insert(const T& d, Node*& p){
         p->n++;
         if(p->isOverflow()){
             splitRoot();
-              //split(p);  
         }else p->children_size++;
     }else{
         p->insertionSort(i, d);
@@ -161,8 +141,6 @@ void Tree_B<T, m>::splitRoot(){
     delete root;
     root = new_father;
 
-    //std::cout << "Root" << std::endl;
-    // root->print();
     root->leaf = false;
     left->isroot = false;
     left->parent = new_father;
@@ -181,12 +159,151 @@ void Tree_B<T, m>::splitRoot(){
 /**************************************************************************/
 template <typename T, int m>
 void Tree_B<T, m>::split(Node* p){
-    //print();
     if(p->isroot) splitRoot();
-    else if(p->searchIndex() == 0){
-        split(p->parent, 1);
-    }else{
-        split(p->parent, p->searchIndex());
+    else if(!p->leaf) {
+        if(p->searchIndex() == 0){
+            splitNotLeaf(p->parent, 1);
+        }else {
+            splitNotLeaf(p->parent, p->searchIndex());
+        }
+    }
+    else {
+        if(p->searchIndex() == 0){
+            split(p->parent, 1);
+        }else{
+            split(p->parent, p->searchIndex());
+        }
+    }
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::printTree(Node* node, int depth, std::ostringstream& oss) {
+    if (node != nullptr) {
+        for (int i = 0; i < depth; i++) {
+            oss << "  ";
+        }
+        for (int i = 0; i < node->n; i++) {
+            oss << node->key[i] << " ";
+        }
+        oss << "\n";
+
+        if (!node->leaf) {
+            for (int i = 0; i < node->children_size; i++) {
+                printTree(node->children[i], depth + 1, oss);
+            }
+        }
+    }
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::printTree(std::ostringstream& oss) {
+    printTree(root, 0, oss);
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::splitNotLeaf(Node* p, int i){
+    Node* left = p->children[i - 1];
+    Node* right = p->children[i];
+
+    // Calcular el número total de claves y el rango de redistribución
+    int totalKeys = left->n + right->n + 1;
+    int alpha = (2 * m - 2) / 3;
+    int beta = 2 * ((2 * m - 2) / 3) + 1;
+
+    // Crear un nuevo nodo
+    Node* new_node = new Node(false, false, p);
+
+    // Crear arreglos temporales para claves e hijos
+    T* keys = new T[totalKeys+1];
+    Node** children = new Node*[totalKeys + 2];
+
+    // Copiar claves e hijos en arreglos temporales
+    int k = 0;
+    for (int j = 0; j < left->n; ++j) {
+        keys[k++] = left->key[j];
+    }
+    keys[k++] = p->key[i - 1];
+    for (int j = 0; j < right->n; ++j) {
+        keys[k++] = right->key[j];
+    }
+
+    int c = 0;
+    for (int j = 0; j < left->children_size; ++j) {
+        children[c++] = left->children[j];
+    }
+    for (int j = 0; j < right->children_size; ++j) {
+        children[c++] = right->children[j];
+    }
+
+    // Redistribuir claves y actualizar nodos
+    left->n = alpha;
+    right->n = beta - (alpha + 1);
+    new_node->n = totalKeys - beta-1;
+
+    k = 0;
+    for (int j = 0; j < alpha; ++j) {
+        left->key[j] = keys[k++];
+    }
+    p->key[i - 1] = keys[k++];
+    for (int j = 0; j < right->n; ++j) {
+        right->key[j] = keys[k++];
+    }
+    for (int j = 0; j < new_node->n; ++j) {
+        new_node->key[j] = keys[k++];
+    }
+    // Redistribuir hijos y actualizar nodos
+    left->children_size = alpha + 1;
+    right->children_size = beta - alpha;
+    new_node->children_size = totalKeys - beta;
+    
+    c = 0;
+    for (int j = 0; j < left->children_size; ++j) {
+        left->children[j] = children[c++];
+    }
+    
+    for (int j = 0; j < right->children_size; ++j) {
+        right->children[j] = children[c++];
+    }
+    for (int j = 0; j < new_node->children_size; ++j) {
+        new_node->children[j] = children[c++];
+    }
+    new_node->actuallyParent(new_node);
+    right->actuallyParent(right);
+    // Ajustar claves y hijos del nodo padre
+    for (int j = p->n; j > i; --j) {
+        p->key[j] = p->key[j - 1];
+        p->children[j + 1] = p->children[j];
+    }
+    p->key[i] = keys[beta];
+    p->children[i + 1] = new_node;
+    p->n++;
+    p->children_size = p->n + 1;
+
+    // Limpiar asignaciones temporales
+    delete[] keys;
+    delete[] children;
+
+    right->print();
+    for(int j = 0; j < right->children_size; ++j){
+        right->children[j]->print();
+    }
+    new_node->print();
+    for(int j = 0; j < new_node->children_size; ++j){
+        new_node->children[j]->print();
+    }
+    if(p->children_size > p->max_children) {
+        if(!verifyRotate(p->parent, p->searchIndex())){
+            split(p);
+        }
+    }
+    // Asegurar que las propiedades del árbol B* se mantengan
+    if (left->children[0] != nullptr) {
+        left->leaf = false;
+        left->actuallyParent(left);
+    }
+    if (right->children[0] != nullptr) {
+        right->leaf = false;
+        right->actuallyParent(right);
     }
 }
 /**************************************************************************/
@@ -204,9 +321,6 @@ void Tree_B<T, m>::split(Node* p, int i) {
     for(int j = 0; j < left->n; ++j) keys[j] = left->key[j];
     keys[left->n] = p->key[i-1];
     for(int j = 0; j < right->n; ++j) keys[j + left->n + 1] = right->key[j];
-    
-    for(int j = 0; j < n_total; ++j) std::cout << keys[j] << ", ";
-    std::cout << beta << std::endl;
 
     left->n = alpha;
     left->children_size = alpha + 1;
@@ -231,13 +345,12 @@ void Tree_B<T, m>::split(Node* p, int i) {
     p->children[i+1] = new_node;
     p->n++;
     p->children_size = p->n + 1;
-
+    delete[] keys;
     if(p->children_size > p->max_children) {
         if(!verifyRotate(p->parent, p->searchIndex())){
             split(p);
         }
     }
-    delete[] keys;
 }
 /**************************************************************************/
 template <typename T, int m>
@@ -310,14 +423,13 @@ void Tree_B<T, m>::rotateLeft(Node* p, int i) {
     left->n++;
     left->children_size = left->n + 1;
     p->key[i-1] = right->key[0];
+
     right->n--;
     right->children_size = right->n + 1;
     
     for (int j = 0; j < right->n; ++j) {
         right->key[j] = right->key[j + 1];
     }
-    std::cout << "\nRotate left" << std::endl;
-    p->print();
 }
 /**************************************************************************/
 template <typename T, int m>
@@ -380,7 +492,6 @@ bool Tree_B<T, m>::Node::isUnderflow() const {
 /**************************************************************************/
 template <typename T, int m>
 void Tree_B<T, m>::Node::print() const {
-    //std::cout << n << std::endl;
     std::cout << "[";
     for (int i = 0; i < n; ++i) {
         std::cout << key[i] << ", ";
@@ -389,11 +500,11 @@ void Tree_B<T, m>::Node::print() const {
     if(isroot) std::cout << "-> Root";
     else if(leaf) std::cout << "-> Leaf";
     else std::cout << "-> Node";
-    if(parent != nullptr){
-        std::cout << " Parent: ";
-        parent->print();
-    }
-    else std::cout << std::endl;
+    // if(parent != nullptr){
+    //     std::cout << " Parent: ";
+    //     parent->print();
+    // }
+    std::cout << std::endl;
 }
 /**************************************************************************/
 template <typename T, int m>
@@ -436,3 +547,200 @@ void Tree_B<T, m>::Node::actuallyParent(Node* p) {
         if(children[i] != nullptr)children[i]->parent = p;
     }
 }
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::remove(const T& d) {
+    if (root == nullptr) {
+        std::cout << "The tree is empty." << std::endl;
+        return;
+    }
+    remove(root, d);
+    if (root->n == 0) {
+        if (!root->leaf) 
+            root = root->children[0];
+    }
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::remove(Node* p, const T& d) {
+    int idx = findKey(p, d);
+
+    if (idx < p->n && p->key[idx] == d) {
+        if (p->leaf) {
+            removeFromLeaf(p, idx);
+        } else {
+            removeFromNonLeaf(p, idx);
+        }
+    } else {
+        if (p->leaf) {
+            std::cout << "The key " << d << " is not in the tree." << std::endl;
+            return;
+        }
+
+        bool flag = (idx == p->n);
+
+        if (p->children[idx]->n < p->min_keys) {
+            fill(p, idx);
+        }
+
+        if (flag && idx > p->n) {
+            remove(p->children[idx - 1], d);
+        } else {
+            remove(p->children[idx], d);
+        }
+    }
+}
+/**************************************************************************/
+template <typename T, int m>
+int Tree_B<T, m>::findKey(Node* p, const T& d) {
+    int idx = 0;
+    while (idx < p->n && p->key[idx] < d) {
+        ++idx;
+    }
+    return idx;
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::removeFromNonLeaf(Node* p, int idx) {
+    T k = p->key[idx];
+
+    if (p->children[idx]->n >= p->min_keys) {
+        T pred = getPred(p, idx);
+        p->key[idx] = pred;
+        remove(p->children[idx], pred);
+    } else if (p->children[idx + 1]->n >= p->min_keys) {
+        T succ = getSucc(p, idx);
+        p->key[idx] = succ;
+        remove(p->children[idx + 1], succ);
+    } else {
+        merge(p, idx);
+        remove(p->children[idx], k);
+    }
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::removeFromLeaf(Node* p, int idx) {
+    for (int i = idx + 1; i < p->n; ++i) {
+        p->key[i - 1] = p->key[i];
+    }
+    p->n--;
+}
+/**************************************************************************/
+template <typename T, int m>
+T Tree_B<T, m>::getPred(Node* p, int idx) {
+    Node* curr = p->children[idx];
+    while (!curr->leaf) {
+        curr = curr->children[curr->n];
+    }
+    return curr->key[curr->n - 1];
+}
+/**************************************************************************/
+template <typename T, int m>
+T Tree_B<T, m>::getSucc(Node* p, int idx) {
+    Node* curr = p->children[idx + 1];
+    while (!curr->leaf) {
+        curr = curr->children[0];
+    }
+    return curr->key[0];
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::fill(Node* p, int idx) {
+    if (idx != 0 && p->children[idx - 1]->n >= p->min_keys) {
+        borrowFromPrev(p, idx);
+    } else if (idx != p->n && p->children[idx + 1]->n >= p->min_keys) {
+        borrowFromNext(p, idx);
+    } else {
+        if (idx != p->n) {
+            merge(p, idx);
+        } else {
+            merge(p, idx - 1);
+        }
+    }
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::borrowFromPrev(Node* p, int idx) {
+    Node* child = p->children[idx];
+    Node* sibling = p->children[idx - 1];
+
+    for (int i = child->n - 1; i >= 0; --i) {
+        child->key[i + 1] = child->key[i];
+    }
+
+    if (!child->leaf) {
+        for (int i = child->n; i >= 0; --i) {
+            child->children[i + 1] = child->children[i];
+        }
+    }
+
+    child->key[0] = p->key[idx - 1];
+
+    if (!child->leaf) {
+        child->children[0] = sibling->children[sibling->n];
+    }
+
+    p->key[idx - 1] = sibling->key[sibling->n - 1];
+
+    child->n += 1;
+    sibling->n -= 1;
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::borrowFromNext(Node* p, int idx) {
+    Node* child = p->children[idx];
+    Node* sibling = p->children[idx + 1];
+
+    child->key[child->n] = p->key[idx];
+
+    if (!child->leaf) {
+        child->children[child->n + 1] = sibling->children[0];
+    }
+
+    p->key[idx] = sibling->key[0];
+
+    for (int i = 1; i < sibling->n; ++i) {
+        sibling->key[i - 1] = sibling->key[i];
+    }
+
+    if (!sibling->leaf) {
+        for (int i = 1; i <= sibling->n; ++i) {
+            sibling->children[i - 1] = sibling->children[i];
+        }
+    }
+
+    child->n += 1;
+    sibling->n -= 1;
+}
+/**************************************************************************/
+template <typename T, int m>
+void Tree_B<T, m>::merge(Node* p, int idx) {
+    Node* child = p->children[idx];
+    Node* sibling = p->children[idx + 1];
+
+    child->key[child->n] = p->key[idx];
+
+    for (int i = 0; i < sibling->n; ++i) {
+        child->key[child->n + 1 + i] = sibling->key[i];
+    }
+
+    if (!child->leaf) {
+        for (int i = 0; i <= sibling->n; ++i) {
+            child->children[child->n + 1 + i] = sibling->children[i];
+            if (child->children[child->n + 1 + i] != nullptr) {
+                child->children[child->n + 1 + i]->parent = child;
+            }
+        }
+    }
+
+    for (int i = idx + 1; i < p->n; ++i) {
+        p->key[i - 1] = p->key[i];
+        p->children[i] = p->children[i + 1];
+    }
+
+    child->n += sibling->n + 1;
+    p->n--;
+
+    delete sibling;
+}
+/**************************************************************************/

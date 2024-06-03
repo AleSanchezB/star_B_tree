@@ -11,7 +11,7 @@ CXXFLAGS_WARNINGS = -Wall -Wextra -Wpedantic -Werror
 CXXFLAGS_SANITIZE = -fsanitize=address -fsanitize=undefined -fsanitize=shift -fsanitize=integer-divide-by-zero -fsanitize=unreachable -fsanitize=vla-bound -fsanitize=null -fsanitize=return -fsanitize=signed-integer-overflow -fsanitize=bounds -fsanitize=bounds-strict -fsanitize=alignment -fsanitize=object-size -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fsanitize=nonnull-attribute -fsanitize=returns-nonnull-attribute -fsanitize=bool -fsanitize=enum -fsanitize=vptr 
 
 # Opciones de compilación
-CXXFLAGS = -std=c++20 -Wall $(CXXFLAGS_SANITIZE) $(CXXFLAGS_WARNINGS)
+CXXFLAGS = -std=c++20 -Wall
 
 # Directorios
 SRCDIR = src

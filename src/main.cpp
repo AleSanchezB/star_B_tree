@@ -2,7 +2,7 @@
 #include "headers/Tree_B.hpp"
 #include <time.h>
 int main() {
-    Tree_B<int, 6> tree;
+    Tree_B<int, 4> tree;
     // std::cout << "----------------" << std::endl;
     // std::cout << "Inserting 1" << std::endl;
     // tree.insert(1);
@@ -98,8 +98,7 @@ int main() {
     // tree.insert(15);
     // tree.print();
 
-    // srand(time(NULL));
-    // int aux = 0;
+    int aux = 0;
     // for(int i = 0; aux != -4; ++i){
     //     std::cout << "----------------" << std::endl;
     //     std::cout << "Dame un numero " << std::endl;
@@ -111,8 +110,10 @@ int main() {
     // }
     
     srand(time(NULL));
-    int aux = 0;
-    for(int i = 0; i < 20; ++i){
+    tree.insert(9);
+    tree.print();
+
+    for(int i = 0; i < 30; ++i){
         aux = rand() % 100;
         std::cout << "----------------" << std::endl;
         std::cout << "Insertando " << aux << std::endl;
@@ -120,6 +121,16 @@ int main() {
         tree.print();
         
     }
-    std::cout << "Terminado" << std::endl; 
+
+    aux = rand() % 100;
+    std::cout << "\n\n----------------" << std::endl;
+    std::cout << "\nBorrando: " << aux << std::endl;
+    tree.remove(aux);
+    tree.print();
+    std::cout << "\n\n----------------" << std::endl;
+
+    std::cout << "\n\nTerminado" << std::endl;
+
+    tree.search(73);
     return 0; 
-}
+} 
