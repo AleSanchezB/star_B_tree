@@ -5,18 +5,24 @@ template <typename T, int m>
 class Tree_B{
 private:
     struct Node{
-        Node(bool leaf = true, bool isroot = false);
+        Node(bool leaf = true, bool isroot = false, Node* parent = nullptr);
         T* key;
         Node** children;         
         bool leaf;
         bool isroot;
+        Node* parent;
         int children_size;
         
         bool isOverflow() const;
         bool isUnderflow() const;
         void insertionSort(int i, const T& key);
-        void split(int index, Node *parent);
         void insertNonFull(const T& key);
+        void actuallyParent(Node* parent);
+        Node* searchParentLeft();
+        Node* searchParentRight();
+        
+        int searchIndex() const;
+
         int n;
 
         void print() const;
@@ -33,13 +39,18 @@ private:
     // void insert(const T& data, Node* root); 
     void remove(const T& key, Node*& root);
 
-    void print_preorder(Node* root) const;
+    void print_preorder(Node* root, int d) const;
     void print_postorder(Node* root) const;
     void print(Node* root) const;
     void insert(const T& key, Node*& root);
     bool search(const T& key, Node* root) const;
-    void split(Node* parent, int index);
     void free(Node* root);
+    void split(Node *parent, int index);
+    void split(Node *parent);
+    void splitRoot();
+    void rotateRight(Node* parent, int index);
+    void rotateLeft(Node* parent, int index);
+    bool verifyRotate(Node* root, int index);
 public:
 	Tree_B();
  	~Tree_B();
